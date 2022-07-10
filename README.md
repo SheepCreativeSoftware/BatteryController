@@ -1,5 +1,6 @@
 # Battery Controller
 
+Controller to measure energy consumption and estimate State of Charge
 
 ***
 >Battery Controller
