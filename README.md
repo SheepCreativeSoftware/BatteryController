@@ -4,7 +4,7 @@
 ***
 >Battery Controller
 >
->Motorcontroller um einen Regler mit Brushlessmotor anzusteuern und per Tastendruck die Drehzahl zu verändern Copyright (C) 2020 Marina Egner | info AT sheepindustries DOT de
+>Motorcontroller um einen Regler mit Brushlessmotor anzusteuern und per Tastendruck die Drehzahl zu verändern Copyright (C) 2020 Marina Egner | info AT sheepCreativeStudios DOT de
 >
 >This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 >
