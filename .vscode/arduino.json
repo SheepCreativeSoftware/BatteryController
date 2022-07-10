@@ -1,0 +1,7 @@
+{
+    "board": "arduino:avr:uno",
+    "programmer": "arduino:avrispmkii",
+    "port": "COM4",
+    "sketch": "BatteryController.ino",
+    "output": "../ArduinoOutput"
+}

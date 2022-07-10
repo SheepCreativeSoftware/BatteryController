@@ -1,0 +1,77 @@
+Release Notes
+
+v1.0.2 17.08.2020
+- Behoben: Drehzahl geht nicht auf 0 zurück
+
+v1.0.1 22.07.2020
+- verzögerte Drehzahl berechnung, alle 100ms; Mehr Präzision bei hoher Drehzahl
+
+v1.0.0 20.07.2020
+- Verbesserung: Speicherbereich für Drehzalmessung erhöht
+- Verbesserung: Speicherladefehler während Interrupt Routine sicher verhindern
+- Englische Komentare übersetzt
+- Programm getestet
+- Restruckturieren des Programms
+- Versetzten von Programmteilen in separate Funktionen
+- Mehr Kommentare hinzugefügt
+
+v0.2.1 22.06.2020
+- Berechnung für Polzahl hinzugefügt
+- Drehzahl anzeige auf 0 zurückstellen verbessert
+- Programmteile umstruckturiert
+- Code optimiert
+- Adafruit Logo entfernt
+
+v0.2.0 20.06.2020
+- Beta Release Version
+
+v0.1.7 20.06.2020
+- Studen anzeige und Drehzahl zum Display hinzugefügt
+- Tests durchgeführt
+
+v0.1.6 19.06.2020
+- Spannung auswerten zum anzeigen mit Komma
+- Batterie Symbol mit grober funktion hinzugefügt
+
+v0.1.5 15.06.2020
+- Schaltplan aktualisiert
+- 2.te .ino Datei gelöscht
+
+v0.1.5 14.06.2020
+- Display stellt erste daten dar
+
+v0.1.4 14.06.2020
+- Initialisierungsoption für Start hinzugefügt
+- Vorbereitung Adafruit I2C Lib
+- i2C scan und speicher im EEPROM
+
+v0.1.3 11.06.2020
+- optimierungen
+
+v0.1.2 11.06.2020
+- optimierung der Drehzahl auswertung
+
+v0.1.1 11.06.2020
+- auslesen der Akkuspannung möglich
+- definieren der Widerstände für Akkuspannungsmessung möglich
+- Drehzahlmessung hinzugefügt
+- Bild mit Beispiel Verdrahtung
+
+v0.1.0 11.06.2020
+- erste Version mit Grundfunktion
+- Code optimiert
+
+v0.0.3 11.06.2020
+- Test durchgeführt
+- Debug Ausgabe hinzugefügt
+- diverse Fehler behoben
+
+v0.0.2 11.06.2020
+- Klasse zum auswerten des Tasterdruck hinzugefügt; Entprellt und mit Erkennung eines langen Druck
+- Ansteuerung des Motors über Tastendruck hinzugefügt
+- Übersetzung fehlerfrei; Bereit für ersten Test
+
+v0.0.1 10.06.2020
+- Initiale version
+- Definiere IO Pin variablen
+- Grundstrucktur erstellt
