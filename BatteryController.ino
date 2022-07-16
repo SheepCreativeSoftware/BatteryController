@@ -62,15 +62,12 @@ bool blinkPulse;
 
 uint32_t letzteZeit = 0;
 uint32_t letzteZeit2 = 0;
-int16_t inCurrentRAW = 0;
-int16_t inCurrentNorm = 0;
-int16_t inCurrentVolts = 2500;
-int16_t inCurrentRAWTemp = 512;
+int16_t currentRawFiltered = 512;
 const int16_t filterFactorRead = 50;
 const int16_t filterFactorCurrent = 10;
 const int16_t correctionVolts = 17;
 #define SENSOR_MID_VOLTAGE 2500;
-#define SENSOR_FACTOR_PER_AMP 66; 66
+#define SENSOR_FACTOR_PER_AMP 66; //66mV/A
 int16_t currentMilliAmps = 0;
 int16_t currentNorm = 0;
 
@@ -88,6 +85,8 @@ uint8_t i2cScan();
 int16_t rawToVolts(int16_t);
 int16_t voltsToCurrent(int16_t);
 int16_t filterT1(int16_t, int16_t, int16_t);
+int32_t voltsToAmps(int32_t);
+int32_t calcMilliAmpHours(int32_t, int32_t);
 
 #define SCREEN_WIDTH 128 // OLED Display width in pixels
 #define SCREEN_HEIGHT 64 // OLED Display height in pixels
@@ -110,24 +109,36 @@ void setup() {
 	delay(2000);
 }
 
+int32_t currentMicrosAmpHours = 0;
 
 void loop() {
 	int16_t inBattCurrentTemp = analogRead(inBattCurrent) * 10;
-	inCurrentRAWTemp = filterT1(inBattCurrentTemp, inCurrentRAWTemp, filterFactorRead);
-	inCurrentRAW = inCurrentRAWTemp / 10;
-	inCurrentVolts = rawToVolts(inCurrentRAW) + correctionVolts;
-	int16_t tempCurrents = inCurrentVolts - SENSOR_MID_VOLTAGE;
-	tempCurrents *= 1000;
-	currentMilliAmps /= tempCurrents / SENSOR_FACTOR_PER_AMP;
+	currentRawFiltered = filterT1(inBattCurrentTemp, currentRawFiltered, filterFactorRead);
+	int16_t tempCurrentRaw = currentRawFiltered / 10;
+	int16_t currentInVolts = rawToVolts(tempCurrentRaw) + correctionVolts;
+	int32_t currentMicrosAmps = voltsToAmps(currentInVolts);
+	currentMilliAmps = currentMicrosAmps / 1000;
 
 	if((millis()%500 >= 250) && (readSensor == false)) {	// Führe nur in bestimmten Zeit Abstand aus
 		readSensor = true;
-		inCurrentNorm = filterT1(voltsToCurrent(inCurrentVolts), inCurrentNorm, filterFactorCurrent);
 		currentNorm = filterT1(currentMilliAmps, currentNorm, filterFactorCurrent);
+		currentMicrosAmpHours = calcMilliAmpHours(currentMicrosAmps, currentMicrosAmpHours);
+		int16_t currentMilliAmpHours = currentMicrosAmpHours / 1000;
 	} else if((millis()%500 < 250) && (readSensor == true)) {
 		readSensor = false;							//Stellt sicher, dass Code nur einmal je Sekunde ausgeführt wird.
 	}
 	displayAnzeigen();									// Darstellung des Display laden
+}
+
+int32_t calcMilliAmpHours(int32_t microsAmps, int32_t microsAmpHours) {
+	int32_t tempMicrosAmpHours = microsAmps / 7200;
+	return microsAmpHours + tempMicrosAmpHours;
+}
+
+int32_t voltsToAmps(int16_t volts) {
+	int32_t tempCurrents = volts - SENSOR_MID_VOLTAGE;
+	tempCurrents *= 1000;
+	return tempCurrents / SENSOR_FACTOR_PER_AMP;
 }
 
 int16_t rawToVolts(int16_t raw) {
@@ -236,16 +247,16 @@ void displayAnzeigen() {									// Darstellung des Display laden
 		display.println(F("RAW"));
 		display.setCursor(8,30); // Start at top-left corner
 		display.setTextSize(1);
-		display.println(inCurrentRAW);
+		//display.println(inCurrentRAW);
 		display.setCursor(64,20); // Start at top-left corner
 		display.setTextSize(1);  
 		display.println(F("AMPS"));
 		display.setCursor(64,30); // Start at top-left corner
 		display.setTextSize(1);
-		display.println(inCurrentNorm);
+		//display.println(inCurrentNorm);
 		display.setCursor(8,50); // Start at top-left corner
 		display.setTextSize(1);
-		display.println(inCurrentVolts);
+		//display.println(inCurrentVolts);
 		display.setCursor(64,50); // Start at top-left corner
 		display.println(currentNorm);
 		display.display();
