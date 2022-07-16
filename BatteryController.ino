@@ -1,7 +1,7 @@
 /*
  * Battery Controller v0.0.1
  * Date: 10.07.2022 | 10:26
- * <Motorcontroller um einen Regler mit Brushlessmotor anzusteuern und per Tastendruck die Drehzahl zu verändern>
+ * <Controller to measure energy consumption and estimate State of Charge>
  * Copyright (C) 2020 Marina Egner <info@sheepindustries.de>
  *
  * This program is free software: you can redistribute it and/or modify it 
@@ -18,31 +18,30 @@
  */
 
 /************************************
- * Programm Konfiguration
+ * Program Configuration
  ************************************/
-//Ändere diesen Wert für unterschiedliche Debuging level
-#define DEBUGLEVEL 3										//0 = Aus | 1 = N/A | >2 = Serial Monitor
+//Change this for different Debuging levels
+#define DEBUGLEVEL 3										//0 = Off | 1 = N/A | >2 = Serial Monitor
 
 /************************************
  * Definition IO Pins
  ************************************/
 /* Pinout Arduino Nano:
  * Serial 0+1 (kein HW Serial) | Interrupt 2+3 | PWM 3, 5, 6, 9, 10, 11 | LED 13 | I2C A4(SDA) + A5(SCL) |
- * Servo Lib deaktiviert PWM funktionalität für pin 9 und 10
  */
 
 //Inputs
 //Pin 0+1 Reserved for serial communication via USB!
 
-#define inBattVolts A0					// Messure Battery Volts
-#define inBattCurrent A1				// Messure Battery Current
+#define inBattVolts A0					// Messurement Battery Volts
+#define inBattCurrent A1				// Messurement Battery Current
 
 //Outputs
 #define outDisplay 2					// Pin to activate Display 
-#define statusLED 13					//Pin mit Status LED
+#define statusLED 13					// Pin with internal Status LED
 
 /************************************
- * Zusätzliche Dateien einbinden
+ * Include nessecary libs
  ************************************/
 #include <Wire.h>
 #include <EEPROM.h>
@@ -50,10 +49,9 @@
 #include <Adafruit_SSD1306.h>
 
 /************************************
- * Definition und Initialiierung
- * Globale Variablen, Klassen und Funktionen
- **********************************/
-//Globale Programm Variablen
+ * Global Vars
+ ************************************/
+//Global vars
 bool serialIsSent = 0;
 bool displaySenden = 0;
 bool readSensor = 0;
@@ -71,6 +69,10 @@ int16_t inCurrentRAWTemp = 512;
 const int16_t filterFactorRead = 50;
 const int16_t filterFactorCurrent = 10;
 const int16_t correctionVolts = 17;
+#define SENSOR_MID_VOLTAGE 2500;
+#define SENSOR_FACTOR_PER_AMP 66; 66
+int16_t currentMilliAmps = 0;
+int16_t currentNorm = 0;
 
 
 uint8_t displayAdress = 0;
@@ -87,38 +89,41 @@ int16_t rawToVolts(int16_t);
 int16_t voltsToCurrent(int16_t);
 int16_t filterT1(int16_t, int16_t, int16_t);
 
-#define SCREEN_WIDTH 128 // OLED Display Breite, in pixels
-#define SCREEN_HEIGHT 64 // OLED Display Höhe, in pixels
-// Deklaration für ein SSD1306 Display an I2C (SDA, SCL pins)
-#define OLED_RESET     -1 // Reset pin # (oder -1 wenn der Arduino sich den Reset Pin teilt)
+#define SCREEN_WIDTH 128 // OLED Display width in pixels
+#define SCREEN_HEIGHT 64 // OLED Display height in pixels
+// Declaration for a SSD1306 Display on I2C (SDA, SCL pins)
+#define OLED_RESET     -1 // Reset pin # (or -1 if the Arduino shares the Reset Pin with the display)
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 void setup() {
 	
 	pinMode(inBattVolts, INPUT);
 	pinMode(inBattCurrent, INPUT);
-	pinMode(outDisplay, OUTPUT);
 	#if (DEBUGLEVEL >=1)									// Bedingte Kompilierung
 		pinMode(statusLED, OUTPUT);							// Status LED definieren zur Anzeige des Status
 	#endif		
 	#if (DEBUGLEVEL >=2)									// Bedingte Kompilierung
-		SerialUSB.begin(9600);  							// Starte Serielle Kommunikation per USB
+		SerialUSB.begin(115200);  							// Starte Serielle Kommunikation per USB
 	#endif
 	digitalWrite(outDisplay, HIGH);
 	displayStart();										// Überprüfe zum Start die Adresse des Displays und starte Display Library
 	delay(2000);
-
-
 }
+
 
 void loop() {
 	int16_t inBattCurrentTemp = analogRead(inBattCurrent) * 10;
 	inCurrentRAWTemp = filterT1(inBattCurrentTemp, inCurrentRAWTemp, filterFactorRead);
 	inCurrentRAW = inCurrentRAWTemp / 10;
 	inCurrentVolts = rawToVolts(inCurrentRAW) + correctionVolts;
+	int16_t tempCurrents = inCurrentVolts - SENSOR_MID_VOLTAGE;
+	tempCurrents *= 1000;
+	currentMilliAmps /= tempCurrents / SENSOR_FACTOR_PER_AMP;
+
 	if((millis()%500 >= 250) && (readSensor == false)) {	// Führe nur in bestimmten Zeit Abstand aus
 		readSensor = true;
 		inCurrentNorm = filterT1(voltsToCurrent(inCurrentVolts), inCurrentNorm, filterFactorCurrent);
+		currentNorm = filterT1(currentMilliAmps, currentNorm, filterFactorCurrent);
 	} else if((millis()%500 < 250) && (readSensor == true)) {
 		readSensor = false;							//Stellt sicher, dass Code nur einmal je Sekunde ausgeführt wird.
 	}
@@ -130,7 +135,7 @@ int16_t rawToVolts(int16_t raw) {
 }
 
 int16_t voltsToCurrent(int16_t volts) {
-	return map(volts, 500, 4500, -20000, 20000);
+	return map(volts, 500, 4500, -5000, 5000);
 }
 
 
@@ -242,7 +247,7 @@ void displayAnzeigen() {									// Darstellung des Display laden
 		display.setTextSize(1);
 		display.println(inCurrentVolts);
 		display.setCursor(64,50); // Start at top-left corner
-		display.println(F("mV"));
+		display.println(currentNorm);
 		display.display();
 		displaySenden = true;
 	} else if((millis()%500 < 250) && (displaySenden == true)) {
